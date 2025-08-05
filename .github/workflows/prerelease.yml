@@ -59,7 +59,7 @@ jobs:
           git tag -d rc || true
 
       - name: Generate notes
-        run: npx conventional-changelog -p conventionalcommits -c .github/changelog.config.cjs -r 0 -o RELEASE_NOTES.md
+        run: npx conventional-changelog --preset conventionalcommits --config .github/changelog.config.cjs --release-count 1 --output-file RELEASE_NOTES.md
 
       - name: Create/update single prerelease
         env:
