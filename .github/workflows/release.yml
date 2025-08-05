@@ -12,7 +12,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: stable-release
+  group: release-tags
   cancel-in-progress: false
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
 
       - name: Remove mutable prerelease tag locally
         run: |
-          git tag -d rc || true
+          git update-ref -d refs/tags/rc || true
           git fetch --tags --force --prune
 
       - uses: actions/setup-node@v4
