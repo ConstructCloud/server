@@ -26,8 +26,8 @@ jobs:
 
       - name: Remove mutable prerelease tag locally
         run: |
-          git tag -d rc || true
           git update-ref -d refs/tags/rc || true
+          git fetch --tags --force --prune
 
       - uses: actions/setup-node@v4
         with:
