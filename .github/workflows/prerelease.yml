@@ -45,28 +45,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # delete prerelease releases
+          # delete prerelease GitHub releases
           mapfile -t REL_IDS < <(gh api repos/$REPO/releases --paginate --jq '.[] | select(.prerelease==true) | .id')
           for id in "${REL_IDS[@]:-}"; do gh api repos/$REPO/releases/$id -X DELETE || true; done
+
           # delete rc-like tags (remote)
           mapfile -t TAGS < <(gh api repos/$REPO/git/refs/tags --paginate \
             --jq '.[] | .ref | sub("^refs/tags/";"") | select(test("^(rc|v[0-9]+\\.[0-9]+\\.[0-9]+-rc)$"))')
           for tag in "${TAGS[@]:-}"; do gh api -X DELETE repos/$REPO/git/refs/tags/$tag || true; done
-          # delete local rc-like tags (avoid “tag exists locally” error)
+
+          # delete any local rc-like tags to avoid “clobber” during future fetches
           git tag -l 'v*-rc' | xargs -r -n1 git tag -d || true
           git tag -d rc || true
 
-      - name: Generate prerelease notes (since last stable)
-        shell: bash
-        run: |
-          npx conventional-changelog -p conventionalcommits -r 0 > FULL_NOTES.md
-          awk 'NR==1,/^## \[?v?[0-9]+\.[0-9]+\.[0-9]+/' FULL_NOTES.md > RELEASE_NOTES.md
+      - name: Generate notes
+        run: npx conventional-changelog -p conventionalcommits -c .github/changelog.config.cjs -r 0 -o RELEASE_NOTES.md
 
       - name: Create/update single prerelease
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
-          TAG="rc"                                  # constant moving prerelease tag
-          TITLE="${{ steps.ver.outputs.next }}-rc"  # shows the computed next version
+          TAG="rc"
+          TITLE="${{ steps.ver.outputs.next }}-rc"
           gh release create "$TAG" --prerelease --title "$TITLE" -F RELEASE_NOTES.md --target "$GITHUB_SHA"
