@@ -5,6 +5,6 @@
   "baseBranches": ["master"],
   "extends": [
     "config:recommended",
-    "github>{{ organisation }}/{{ repository }}//.github/renovate/auto-merge.json"
+    "github>ConstructCloud/server//.github/renovate/auto-merge.json"
   ]
 }

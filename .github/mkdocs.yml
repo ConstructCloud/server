@@ -1,6 +1,6 @@
-site_name: {{ organisation }} {{ repository }}
-site_url: https://{{ organisation }}.github.io/{{ repository }}
-repo_url: https://github.com/{{ organisation }}/{{ repository }}
+site_name: ConstructCloud server
+site_url: https://ConstructCloud.github.io/server
+repo_url: https://github.com/ConstructCloud/server
 edit_uri: edit/master/docs/
 
 theme:

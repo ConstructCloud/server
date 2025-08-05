@@ -13,8 +13,8 @@ Make sure you have the following installed:
 Clone the repository and navigate to the project directory:
 
 ```bash
-git clone https://github.com/{{ organisation }}/{{ repository }}
-cd {{ repository }}
+git clone https://github.com/ConstructCloud/server
+cd server
 ```
 
 ## Setup
@@ -27,4 +27,4 @@ make setup
 
 ## Next Steps
 
-Once setup is complete, check out the [usage guide](https://{{ organisation }}.github.io/{{ repository }}/usage) to learn how to use the project, or see the [contributing guide](https://{{ organisation }}.github.io/{{ repository }}/contributing) if you'd like to contribute.
+Once setup is complete, check out the [usage guide](https://ConstructCloud.github.io/server/usage) to learn how to use the project, or see the [contributing guide](https://ConstructCloud.github.io/server/contributing) if you'd like to contribute.
