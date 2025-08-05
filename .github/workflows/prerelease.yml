@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: prerelease-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-tags
+  cancel-in-progress: false
 
 jobs:
   rc:
