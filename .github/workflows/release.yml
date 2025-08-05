@@ -1,0 +1,40 @@
+name: release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 1 * * 1" # every Monday 09:00 AWST
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: stable-release
+  cancel-in-progress: false
+
+jobs:
+  stable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Semantic Release
+        run: npm install --no-save semantic-release @semantic-release/github @semantic-release/git @semantic-release/release-notes-generator @semantic-release/commit-analyzer conventional-changelog-conventionalcommits conventional-changelog-cli conventional-recommended-bump semver
+
+      - name: Use release config
+        run: cp .github/.releaserc ./.releaserc
+
+      - name: Run semantic-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --no-ci

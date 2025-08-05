@@ -1,0 +1,72 @@
+name: prerelease
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prerelease-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: Install Semantic Release
+        run: npm install --no-save semantic-release @semantic-release/github @semantic-release/git @semantic-release/release-notes-generator @semantic-release/commit-analyzer conventional-changelog-conventionalcommits conventional-changelog-cli conventional-recommended-bump semver
+
+      - name: Compute next version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          LAST_STABLE=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || echo "v0.0.0")
+          TYPE=$(npx conventional-recommended-bump -p conventionalcommits 2>/dev/null || echo patch)
+          TYPE=$(echo "$TYPE" | grep -Eo 'major|minor|patch' | head -1 || echo patch)
+          NEXT=$(node -e 'const semver=require("semver"); const base=process.argv[1].replace(/^v/,""); const t=process.argv[2]||"patch"; console.log("v"+semver.inc(base,t));' "$LAST_STABLE" "$TYPE")
+          echo "last=$LAST_STABLE" >> $GITHUB_OUTPUT
+          echo "type=$TYPE"        >> $GITHUB_OUTPUT
+          echo "next=$NEXT"        >> $GITHUB_OUTPUT
+
+      - name: Remove previous prereleases/tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # delete prerelease releases
+          mapfile -t REL_IDS < <(gh api repos/$REPO/releases --paginate --jq '.[] | select(.prerelease==true) | .id')
+          for id in "${REL_IDS[@]:-}"; do gh api repos/$REPO/releases/$id -X DELETE || true; done
+          # delete rc-like tags (remote)
+          mapfile -t TAGS < <(gh api repos/$REPO/git/refs/tags --paginate \
+            --jq '.[] | .ref | sub("^refs/tags/";"") | select(test("^(rc|v[0-9]+\\.[0-9]+\\.[0-9]+-rc)$"))')
+          for tag in "${TAGS[@]:-}"; do gh api -X DELETE repos/$REPO/git/refs/tags/$tag || true; done
+          # delete local rc-like tags (avoid “tag exists locally” error)
+          git tag -l 'v*-rc' | xargs -r -n1 git tag -d || true
+          git tag -d rc || true
+
+      - name: Generate prerelease notes (since last stable)
+        shell: bash
+        run: |
+          npx conventional-changelog -p conventionalcommits -r 0 > FULL_NOTES.md
+          awk 'NR==1,/^## \[?v?[0-9]+\.[0-9]+\.[0-9]+/' FULL_NOTES.md > RELEASE_NOTES.md
+
+      - name: Create/update single prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="rc"                                  # constant moving prerelease tag
+          TITLE="${{ steps.ver.outputs.next }}-rc"  # shows the computed next version
+          gh release create "$TAG" --prerelease --title "$TITLE" -F RELEASE_NOTES.md --target "$GITHUB_SHA"
