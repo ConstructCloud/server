@@ -1,6 +1,6 @@
 # Documentation
 
-This is the official documentation for the {{ organisation }} **{{ repository }}**.
+This is the official documentation for the ConstructCloud **server**.
 
 ## Sections
 

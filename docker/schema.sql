@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS {{ organisation }};
+CREATE DATABASE IF NOT EXISTS ConstructCloud;
 
-USE {{ organisation }};
+USE ConstructCloud;
 
 CREATE TABLE IF NOT EXISTS healthcheck (
     id INT AUTO_INCREMENT PRIMARY KEY,
